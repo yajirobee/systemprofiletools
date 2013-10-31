@@ -1,7 +1,57 @@
 #! /usr/bin/env python
 
 import sys, os, re
+import subprocess as sp
 import numpy as np
+
+class cpuio_stat_watcher(object):
+    def __init__(self, iostatfile, mpstatfile, interval = 1):
+        self.iostatfile = iostatfile
+        self.mpstatfile = mpstatfile
+
+    def __enter__(self):
+        self.iostatproc = sp.Popen(["iostat", "-x", str(interval)],
+                                   stdout = open(self.iostatfile, "w"))
+        self.mpstatproc = sp.Popen(["mpstat", "-P", "ALL", str(interval)],
+                                   stdout = open(self.mpstatfile, "w"))
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+       self.iostatproc.kill()
+       self.mpstatproc.kill()
+       return True if exc_type == None else False
+
+class perf_stat_watcher(object):
+    perfevents = (
+        {"select": "cycles", "name": "cycles"},
+        {"select": "cache-references", "name": "L3_cache_references"},
+        {"select": "cache-misses", "name": "L3_cache_misses"},
+        {"select": "LLC-loads", "name": "LLC-loads"},
+        {"select": "LLC-load-misses", "name": "LLC-load-misses"},
+        {"select": "LLC-stores", "name": "LLC-stores"},
+        {"select": "LLC-store-misses", "name": "LLC-store-misses"},
+        {"select": "L1-dcache-loads", "name": "L1-dcache-loads"},
+        {"select": "L1-dcache-load-misses", "name": "L1-dcache-load-misses"},
+        {"select": "L1-dcache-stores", "name": "L1-dcache-stores"},
+        {"select": "L1-dcache-store-misses", "name": "L1-dcache-store-misses"}
+        )
+    def __init__(self, perfstatfile, interval = 1):
+        self.perfcmd = ["perf", "stat", "--all-cpus", "--no-aggr",
+                        #"--cpu=" + ','.join([str(v) for v in self.cpus]),
+                        "--output", perfstatfile, "--append",
+                        "--event=" + ','.join([d["select"] for d in self.perfevents]),
+                        "sleep", str(interval)]
+
+    def __enter__(self):
+        pid = os.fork()
+        if pid == 0:
+            while True: sp.call()
+        else:
+            self.child = pid
+            return
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        os.kill(self.child, 9)
+        return True if exc_type == None else False
 
 def import_iostatfile(iostatfile):
     """
