@@ -8,11 +8,12 @@ class cpuio_stat_watcher(object):
     def __init__(self, iostatfile, mpstatfile, interval = 1):
         self.iostatfile = iostatfile
         self.mpstatfile = mpstatfile
+        self.interval = str(interval)
 
     def __enter__(self):
-        self.iostatproc = sp.Popen(["iostat", "-x", str(interval)],
+        self.iostatproc = sp.Popen(["iostat", "-x", self.interval],
                                    stdout = open(self.iostatfile, "w"))
-        self.mpstatproc = sp.Popen(["mpstat", "-P", "ALL", str(interval)],
+        self.mpstatproc = sp.Popen(["mpstat", "-P", "ALL", sefl.interval)],
                                    stdout = open(self.mpstatfile, "w"))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -44,7 +45,7 @@ class perf_stat_watcher(object):
     def __enter__(self):
         pid = os.fork()
         if pid == 0:
-            while True: sp.call()
+            while True: sp.call(self.perfcmd)
         else:
             self.child = pid
             return
