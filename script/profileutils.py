@@ -13,13 +13,13 @@ class cpuio_stat_watcher(object):
     def __enter__(self):
         self.iostatproc = sp.Popen(["iostat", "-x", self.interval],
                                    stdout = open(self.iostatfile, "w"))
-        self.mpstatproc = sp.Popen(["mpstat", "-P", "ALL", sefl.interval)],
+        self.mpstatproc = sp.Popen(["mpstat", "-P", "ALL", self.interval],
                                    stdout = open(self.mpstatfile, "w"))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-       self.iostatproc.kill()
-       self.mpstatproc.kill()
-       return True if exc_type == None else False
+        self.iostatproc.kill()
+        self.mpstatproc.kill()
+        return True if exc_type == None else False
 
 class perf_stat_watcher(object):
     perfevents = (
