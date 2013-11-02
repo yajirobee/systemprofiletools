@@ -43,17 +43,23 @@ def generate_allstatgraphs(statfiles, devices = [], cores = [], terminaltype = "
                 output = "{0}_core{1}cache.{2}".format(fwoext, core, terminaltype)
                 drawcache.plot_cache(cacheprof, output, 1, terminaltype)
         elif ext == ".iohist":
-            ioprof = [[float(v) for v in line.strip().split()] for line in open(f)]
+            ioprof = [[float(v.strip()) for v in line.split()] for line in open(f)]
             outprefix = fwoext
             drawio.plot_ioprof(ioprof, outprefix, 1, terminaltype)
         elif ext == ".cpuhist":
-            cpuprof = [[float(v) for v in line.strip().split()] for line in open(f)]
+            cpuprof = [[float(v.strip()) for v in line.split()] for line in open(f)]
             output = fwoext + "." + terminaltype
             drawcpu.plot_cpuprof(cpuprof, output, 1, terminaltype)
         elif ext == ".cachehist":
-            cacheprof = [[float(v) for v in line.strip().split()] for line in open(f)]
+            cacheprof = []
+            for line in open(f):
+                curdict = {}
+                for val in line.split():
+                    vals = val.split(":", 1)
+                    if len(vals) == 2: curdict[vals[0]] = float(vals[1])
+                cacheprof.append(curdict)
             output = fwoext + "cache." + terminaltype
-            drawcachemiss.plot_cachemiss(cacheprof, output, 1, terminaltype)
+            drawcache.plot_cache(cacheprof, output, 1, terminaltype)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
