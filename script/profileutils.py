@@ -5,6 +5,9 @@ import subprocess as sp
 import numpy as np
 
 class cpuio_stat_watcher(object):
+    """
+    iostat and mpstat is executed along with in this context
+    """
     def __init__(self, iostatfile, mpstatfile, interval = 1):
         self.iostatfile = iostatfile
         self.mpstatfile = mpstatfile
@@ -22,6 +25,9 @@ class cpuio_stat_watcher(object):
         return True if exc_type == None else False
 
 class perf_stat_watcher(object):
+    """
+    perf stat is executed along with in this context
+    """
     perfevents = (
         {"select": "cycles", "name": "cycles"},
         {"select": "cache-references", "name": "L3_cache_references"},
@@ -120,9 +126,9 @@ def import_perfstatfile(perfstatfile):
             currentstatdict[corenum][vals[2]] = int(vals[1]) if vals != "<not counted>" else -1
         elif vals[2] == "time" and vals[3] == "elapsed":
             if currentstatdict:
-                for k, v in currentstatdict.items():
-                    if k not in perfstatdict: perfstatdict[k] = []
-                    perfstatdict[k].append(v)
+                for core, v in currentstatdict.items():
+                    if core not in perfstatdict: perfstatdict[k] = []
+                    perfstatdict[core].append(v)
             currentstatdict = {}
     return perfstatdict
 
