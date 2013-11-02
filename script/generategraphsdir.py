@@ -21,7 +21,7 @@ def search_statfiles(rootdir):
                 if ext in exts: statfiles.append(path)
     return statfiles
 
-def generate_allgraphs(statfiles, devices = [], cores = [], terminaltype = "png"):
+def generate_allstatgraphs(statfiles, devices = [], cores = [], terminaltype = "png"):
     for f in statfiles:
         fwoext, ext = os.path.splitext(f)
         if ext == ".io":
@@ -65,4 +65,4 @@ if __name__ == "__main__":
     terminaltype = sys.argv[4] if len(sys.argv) >= 5 else "png"
 
     statfiles = search_statfiles(rootdir)
-    generate_allgraphs(statfiles, devices, cores, terminaltype)
+    generate_allstatgraphs(statfiles, devices, cores, terminaltype)
