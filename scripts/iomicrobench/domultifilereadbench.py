@@ -18,18 +18,18 @@ class multifilereadbenchmarker(object):
         for i in range(nthreads % len(fpaths)): threadsperfilelist[i] += 1
         procs = [sp.Popen(shlex.split(cmd.format(fpath = fpath, nthreads = nth)),
                           stdout = sp.PIPE, stderr = open("/dev/null", "w"))
-                 for fpath, nth in zip(fpaths, threadsperfilelist)]
+                 for fpath, nth in zip(fpaths, threadsperfilelist) if nth >= 1]
         if any([p.wait() for p in procs]):
             sys.stderr.write("storage_measure failed\n")
             sys.exit(1)
         return self.proc_result([p.stdout for p in procs])
 
-    def exec_bench_wstat(self, cmd, fpaths, iostatout, mpstatout):
+    def exec_bench_wstat(self, cmd, nthreads, fpaths, iostatout, mpstatout):
         from profileutils import io_stat_watcher, mp_stat_watcher
         with io_stat_watcher(iostatout), mp_stat_watcher(mpstatout):
             return self.exec_bench(cmd, nthreads, fpaths)
 
-    def exec_bench_wstat(self, cmd, fpaths, iostatout, mpstatout, perfout):
+    def exec_bench_wperfstat(self, cmd, nthreads, fpaths, iostatout, mpstatout, perfout):
         from profileutils import io_stat_watcher, mp_stat_watcher, perf_stat_watcher
         with io_stat_watcher(iostatout), mp_stat_watcher(mpstatout), perf_stat_watcher(perfout):
             return self.exec_bench(cmd, nthreads, fpaths)
@@ -38,7 +38,7 @@ class multifilereadbenchmarker(object):
         res = {}
         respattern = re.compile(r"([a-z_]+)\s(\d+(?:\.\d*)?)")
         reskeys = ["start_time", "finish_time", "total_ops"]
-        for key in reskeys: res[k] = []
+        for key in reskeys: res[key] = []
         for output in outputs:
             for line in output:
                 line = line.rstrip()
@@ -127,5 +127,5 @@ if __name__ == "__main__":
     datadir = sys.argv[1]
     assert os.path.isdir(datadir), "datadir does not exist"
 
-    fpaths = os.listdir(datadir)
+    fpaths = [os.path.join(datadir, d) for d in os.listdir(datadir)]
     main(fpaths)

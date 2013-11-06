@@ -45,7 +45,7 @@ class readbenchmarker(object):
         return res
 
 def doreadbench(benchexe, outdir, fpath, valdicts, statflg = False):
-    cmdtmp = benchexe + " -s {iosize} -m {nthreads} -i {iterate} -t {timeout} " + fpath
+    cmdtmp = benchexe + " -s {iosize} -m {nthreads} -i {iterate} -t {timeout} -d " + fpath
     rbench = readbenchmarker()
     bname = os.path.splitext(os.path.basename(fpath))[0]
     recorder = util.sqlitehelper(os.path.join(outdir, "readspec_{0}.db".format(bname)))

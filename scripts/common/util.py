@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-import sys, os, sqlite3, glob
+import sys, os, sqlite3, glob, re
 
 class sqlitehelper(object):
     def __init__(self, dbpath):
