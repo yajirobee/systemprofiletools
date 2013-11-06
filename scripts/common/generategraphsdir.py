@@ -64,6 +64,7 @@ def generate_allstatgraphs(statfiles, devices = [], cores = [], terminaltype = "
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.stderr.write("Usage : {0} rootdir [devices] [cores] [terminaltype]\n".format(sys.argv[0]))
+        sys.exit(1)
 
     rootdir = sys.argv[1]
     devices = sys.argv[2].split(',') if len(sys.argv) >= 3 else []
