@@ -34,7 +34,7 @@ class mixedloadbenchmarker(object):
     def proc_result(self, output):
         res = {}
         respattern = re.compile(r"([a-z_]+)\s(\d+(?:\.\d*)?)")
-        reskeys = ["exec_time_sec", "gen_tasks", "opt_tasks", "usec_per_task",
+        reskeys = ["exec_time_sec", "generated_tasks", "operated_tasks", "usec_per_task",
                    "read_mb_per_sec", "read_io_per_sec", "read_usec_per_io",
                    "write_mb_per_sec", "write_io_per_sec", "write_usec_per_io"]
         for k in reskeys: res[k] = None
@@ -49,7 +49,7 @@ class mixedloadbenchmarker(object):
 
 def dobench(benchexe, outdir, valdicts, statflg = False):
     iodumpfile = "/tmp/iodump"
-    cmdtmp = benchexe + "-m {nthreads} " + iodumpfile
+    cmdtmp = benchexe + " -m {nthreads} " + iodumpfile
     mixbench = mixedloadbenchmarker()
     dbpath = os.path.join(outdir, "mixedbench.db")
     recorder = util.sqlitehelper(dbpath)
@@ -57,8 +57,8 @@ def dobench(benchexe, outdir, valdicts, statflg = False):
     columns = (("iosize", "integer"),
                ("nthreads", "integer"),
                ("exec_time_sec", "real"),
-               ("gen_tasks", "integer"),
-               ("opt_tasks", "integer"),
+               ("generated_tasks", "integer"),
+               ("operated_tasks", "integer"),
                ("usec_per_task", "real"),
                ("read_mb_per_sec", "real"),
                ("read_io_per_sec", "real"),
@@ -69,19 +69,20 @@ def dobench(benchexe, outdir, valdicts, statflg = False):
     columns = recorder.createtable(tblname, columns)
     workloadfunc = lambda i: i % 4 <= 2
     for d in valdicts:
-        create_workload(iodumpfile, d["numtasks"], d["readfiles"], d["writefiles"],
+        create_workload(iodumpfile, d["numtasks"],
+                        d["readfiles"][:], d["writefiles"][:],
                         d["nthreads"], d["iosize"], 1 << 10, workloadfunc)
         clearcache.clear_cache(2 ** 30)
         cmd = cmdtmp.format(**d)
         sys.stderr.write("start : {0}\n".format(cmd))
         if statflg:
-            direc = os.path.join(outdir, tblname + "_nthreads{0}".format(nthreads))
+            direc = os.path.join(outdir, tblname + "_nthreads{0}".format(d["nthreads"]))
             statoutdir = util.create_sequenceddir(direc)
             iostatout = os.path.join(statoutdir, "iostat_interval1.io")
             mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
             res = mixbench.exec_bench_wstat(cmd, iostatout, mpstatout)
         else: res = mixbench.exec_bench(cmd)
-        res.update(valdict)
+        res.update(d)
         recorder.insert(tblname, res)
 
 def main():
@@ -98,7 +99,7 @@ def main():
     os.mkdir(outdir)
 
     for i in range(5):
-        dobench(os.path.join(_bindir, "ioreplayer"), outdir, valdicts, False)
+        dobench(os.path.join(_bindir, "ioreplayer"), outdir, valdicts, True)
 
 if __name__ == "__main__":
     main()

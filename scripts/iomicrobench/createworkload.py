@@ -22,16 +22,16 @@ def create_workload(output, ntasks, readfiles, writefiles,
     with open(output, "w") as fo:
         for i in range(ntasks):
             idx = i % nthreads
-            if workloadfunc(i):
+            if workloadfunc(i / nthreads):
                 if not readtasksdict[idx]:
                     f = readfiles.pop(0)
                     readtasksdict[idx] = create_tasks_fromfile(f, "R", iosize, maxiter)
-                task = readtasksdict[i % nthreads].pop(0)
+                task = readtasksdict[idx].pop(0)
             else:
                 if not writetasksdict[idx]:
                     f = writefiles.pop(0)
                     writetasksdict[idx] = create_tasks_fromfile(f, "W", iosize, maxiter)
-                task = writetasksdict[i % nthreads].pop(0)
+                task = writetasksdict[idx].pop(0)
             fo.write("\t".join(task) + "\n")
 
 if __name__ == "__main__":
