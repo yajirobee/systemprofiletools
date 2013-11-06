@@ -3,6 +3,13 @@
 import sys, os, shlex, re, itertools, time
 import subprocess as sp
 import clearcache
+
+_mydirabspath = os.path.dirname(os.path.abspath(__file__))
+_prjtopdir = os.path.dirname(os.path.dirname(_mydirabspath))
+_bindir = os.path.join(_prjtopdir, "bin")
+_commondir = os.path.join(os.path.dirname(_mydirabspath), "common")
+
+sys.path.append(_commondir)
 import util
 
 class multifilereadbenchmarker(object):
@@ -12,10 +19,9 @@ class multifilereadbenchmarker(object):
         procs = [sp.Popen(shlex.split(cmd.format(fpath = fpath, nthreads = nth)),
                           stdout = sp.PIPE, stderr = open("/dev/null", "w"))
                  for fpath, nth in zip(fpaths, threadsperfilelist)]
-        for p in procs:
-            if p.wait() != 0:
-                sys.stderr.write("storage_measure failed\n")
-                sys.exit(1)
+        if any([p.wait() for p in procs]):
+            sys.stderr.write("storage_measure failed\n")
+            sys.exit(1)
         return self.proc_result([p.stdout for p in procs])
 
     def exec_bench_wstat(self, cmd, fpaths, iostatout, mpstatout):
@@ -100,19 +106,18 @@ def main(fpaths):
                          "timeout": timeout,
                          "iterate": maxfsize / vals[0]})
 
-    prgdir = os.path.dirname(os.path.dirname(__file__))
     outdir = "/data/local/keisuke/{0}".format(time.strftime("%Y%m%d%H%M%S", time.gmtime()))
     os.mkdir(outdir)
 
     for i in range(5):
         # sequential read
         sys.stdout.write("sequential read\n")
-        doreadbench(os.path.join(prgdir, "sequentialread"), outdir, fpaths, valdicts, True)
+        doreadbench(os.path.join(_bindir, "sequentialread"), outdir, fpaths, valdicts, True)
         time.sleep(300)
 
         # random read
         sys.stdout.write("random read\n")
-        doreadbench(os.path.join(prgdir, "randomread"), outdir, fpaths, valdicts, True)
+        doreadbench(os.path.join(_bindir, "randomread"), outdir, fpaths, valdicts, True)
         time.sleep(300)
 
 if __name__ == "__main__":

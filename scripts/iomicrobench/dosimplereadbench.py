@@ -3,6 +3,13 @@
 import sys, os, shlex, re, itertools, time
 import subprocess as sp
 import clearcache
+
+_mydirabspath = os.path.dirname(os.path.abspath(__file__))
+_prjtopdir = os.path.dirname(os.path.dirname(_mydirabspath))
+_bindir = os.path.join(_prjtopdir, "bin")
+_commondir = os.path.join(os.path.dirname(_mydirabspath), "common")
+
+sys.path.append(_commondir)
 import util
 
 class readbenchmarker(object):
@@ -79,19 +86,18 @@ def main(fpath):
                          "timeout": timeout,
                          "iterate": iomax / (vals[0] * vals[1])})
 
-    prgdir = os.path.dirname(os.path.dirname(__file__))
     outdir = "/data/local/keisuke/{0}".format(time.strftime("%Y%m%d%H%M%S", time.gmtime()))
     os.mkdir(outdir)
 
     for i in range(5):
         # sequential read
         sys.stdout.write("sequential read\n")
-        doreadbench(os.path.join(prgdir, "sequentialread"), outdir, fpath, valdicts, True)
+        doreadbench(os.path.join(_bindir, "sequentialread"), outdir, fpath, valdicts, True)
         time.sleep(300)
 
         # random read
         sys.stdout.write("random read\n")
-        doreadbench(os.path.join(prgdir, "randomread"), outdir, fpath, valdicts, True)
+        doreadbench(os.path.join(_bindir, "randomread"), outdir, fpath, valdicts, True)
         time.sleep(300)
 
 if __name__ == "__main__":

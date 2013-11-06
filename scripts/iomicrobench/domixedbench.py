@@ -4,6 +4,13 @@ import sys, os, shlex, re, time
 import subprocess as sp
 from createworkload import create_workload
 import clearcache
+
+_mydirabspath = os.path.dirname(os.path.abspath(__file__))
+_prjtopdir = os.path.dirname(os.path.dirname(_mydirabspath))
+_bindir = os.path.join(_prjtopdir, "bin")
+_commondir = os.path.join(os.path.dirname(_mydirabspath), "common")
+
+sys.path.append(_commondir)
 import util
 
 class mixedloadbenchmarker(object):
@@ -87,12 +94,11 @@ def main():
                                 for i in range(32, 64)]
                  } for i in range(5)]
 
-    prgdir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     outdir = "/data/local/keisuke/{0}".format(time.strftime("%Y%m%d%H%M%S", time.gmtime()))
     os.mkdir(outdir)
 
     for i in range(5):
-        dobench(os.path.join(prgdir, "ioreplayer"), outdir, valdicts, False)
+        dobench(os.path.join(_bindir, "ioreplayer"), outdir, valdicts, False)
 
 if __name__ == "__main__":
     main()

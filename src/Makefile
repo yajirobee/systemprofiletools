@@ -1,8 +1,6 @@
 top_builddir = ..
 bindir = $(top_builddir)/bin
 
-
-
 all:
 	@if [ ! -d $(bindir) ]; then \
 		mkdir -p $(bindir); \

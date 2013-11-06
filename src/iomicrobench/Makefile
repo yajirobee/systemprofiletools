@@ -1,7 +1,7 @@
 READBENCH = sequentialread randomread
 IOREPLAYER = ioreplayer
 TARGETS = $(READBENCH) $(IOREPLAYER)
-LOCALOBJS = $(foreach target, $(TARGETS), $(addsuffix .o, $(target)))
+LOCALOBJS = $(addsuffix .o, $(TARGETS))
 
 top_builddir = ../..
 bindir = $(top_builddir)/bin
@@ -15,11 +15,8 @@ $(READBENCH) : % : %.o $(commondir)/util.o
 $(IOREPLAYER): ioreplayer.o $(commondir)/util.o $(commondir)/arrayqueue.o
 	$(CC) -o $(bindir)/$@ $^ $(LIBS)
 
-cleanobject:
-	/bin/rm -f $(addsuffix .o, $(READBENCH)) util.o
-
-clean: cleanobject
-	/bin/rm -f $(TARGETS) $(LOCALOBJS)
+clean:
+	/bin/rm -f $(LOCALOBJS)
 
 .PHONY: check-syntax clean
 
