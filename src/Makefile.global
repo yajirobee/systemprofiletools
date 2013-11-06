@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS =
-LIBS = -lpthread -lrt
+LIBS = -lpthread -lrt -lnuma
 
 all: $(TARGETS)
 

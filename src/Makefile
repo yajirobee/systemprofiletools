@@ -8,6 +8,8 @@ all:
 	$(MAKE) -C common
 	$(MAKE) -C iomicrobench
 
+.PHONY: clean
+
 clean:
 	/bin/rm -rf $(bindir)
 	$(MAKE) -C common $@

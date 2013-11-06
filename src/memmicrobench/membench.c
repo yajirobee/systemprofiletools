@@ -5,20 +5,11 @@
 #include <string.h>
 #include <sched.h>
 #include <numa.h>
-#include <sys/time.h>
+#include <time.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <assert.h>
-
-#define GETTIMEOFDAY(tv_ptr)                                    \
-    {                                                           \
-        if (0 != gettimeofday(tv_ptr, NULL)) {                  \
-            perror("gettimeofday(3) failed ");                  \
-            fprintf(stderr, " @%s:%d\n", __FILE__, __LINE__);   \
-        }                                                       \
-    }
-
-const int CACHE_LINE_SZ  = 64; // assume cache line is 64B
+#include "util.h"
 
 typedef struct {
     unsigned long ops;
@@ -54,25 +45,8 @@ parsearg(int argc, char **argv)
       option.usecore = atoi(optarg);
       break;
     case 's':
-      {
-        char *suffix;
-        option.access_size = strtol(optarg, &suffix, 10);
-        switch (*suffix){
-        case 'k':
-        case 'K':
-          option.access_size <<= 10;
-          break;
-        case 'm':
-        case 'M':
-          option.access_size <<= 20;
-          break;
-        case 'g':
-        case 'G':
-          option.access_size <<= 30;
-          break;
-        }
-        break;
-      }
+      option.access_size = procsuffix(optarg);
+      break;
     case 't':
       option.timeout = atof(optarg) * 1000000.0;
       break;
@@ -81,18 +55,6 @@ parsearg(int argc, char **argv)
       exit(EXIT_FAILURE);
     }
   }
-}
-
-static inline double
-elapsed_time_from(struct timeval *tv)
-{
-    struct timeval now;
-    if (0 != gettimeofday(&now, NULL)){
-        perror("gettimeofday(3) failed ");
-        fprintf(stderr, " @%s:%d\n", __FILE__, __LINE__);
-    }
-
-    return (now.tv_sec - tv->tv_sec) * 1000 * 1000.0 + (now.tv_usec - tv->tv_usec);
 }
 
 static inline uint64_t
@@ -108,7 +70,7 @@ read_tsc(void)
     return ret;
 }
 
-void
+static inline void
 swap_long(long *ptr1, long *ptr2)
 {
     long tmp;
@@ -129,15 +91,14 @@ memory_stress_rand(perf_counter_t *pc,
   long *ptr_start;
   unsigned long *shufflearray;
   const unsigned long niter = 2 << 10;
-  struct timeval stime;
-  double t = 0;
+  struct timespec stime, ftime;
 
   register uintptr_t t0, t1;
 
   {
     // initialize shuffled pointer loop
-    const unsigned long ncacheline = working_size / CACHE_LINE_SZ;
-    const unsigned long step = CACHE_LINE_SZ / sizeof(long);
+    const unsigned long ncacheline = working_size / CACHELINE_SIZE;
+    const unsigned long step = CACHELINE_SIZE / sizeof(long);
     unsigned long offset, tmp;
     if ((shufflearray = (unsigned long *)calloc(ncacheline, sizeof(long))) == NULL) {
       perror("calloc()");
@@ -165,8 +126,9 @@ memory_stress_rand(perf_counter_t *pc,
     }
   }
 
-  GETTIMEOFDAY(&stime);
-  while ((t = elapsed_time_from(&stime)) < option.timeout) {
+  CLOCK_GETTIME(&stime);
+  CLOCK_GETTIME(&ftime);
+  while (TIMEINTERVAL_SEC(stime, ftime) < option.timeout) {
     t0 = read_tsc();
     ptr = ptr_start;
     for (i = 0; i < niter; i++){
@@ -175,8 +137,9 @@ memory_stress_rand(perf_counter_t *pc,
     t1 = read_tsc();
     pc->clk += t1 - t0;
     pc->ops += niter * MEM_INNER_LOOP_RANDOM_NUM_OPS;
+    CLOCK_GETTIME(&ftime);
   }
-  pc->wallclocktime = t;
+  pc->wallclocktime = TIMEINTERVAL_SEC(stime, ftime);
 }
 
 void
@@ -239,7 +202,7 @@ main(int argc, char **argv)
            "access_size\t%ld\n"
            "total_ops\t%ld\n"
            "total_clk\t%ld\n"
-           "elapsed_time\t%lf\n"
+           "elapsed_time\t%.9f\n"
            "ops_per_sec\t%le\n"
            "clk_per_op\t%le\n"
            "(usec_per_op\t%lf)\n",
@@ -247,10 +210,10 @@ main(int argc, char **argv)
            mbinfo.working_size,
            mbinfo.pc.ops,
            mbinfo.pc.clk,
-           mbinfo.pc.wallclocktime / (1000 * 1000),
-           mbinfo.pc.ops / (mbinfo.pc.wallclocktime / (1000 * 1000)),
+           mbinfo.pc.wallclocktime,
+           mbinfo.pc.ops / mbinfo.pc.wallclocktime,
            ((double)mbinfo.pc.clk) / mbinfo.pc.ops,
-           mbinfo.pc.wallclocktime / mbinfo.pc.ops
+           mbinfo.pc.wallclocktime * 1000000 / mbinfo.pc.ops
            );
   }
 

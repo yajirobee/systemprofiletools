@@ -1,6 +1,5 @@
-READBENCH = sequentialread randomread
-IOREPLAYER = ioreplayer
-TARGETS = $(READBENCH) $(IOREPLAYER)
+MEMBENCH = membench
+TARGETS = $(MEMBENCH)
 LOCALOBJS = $(addsuffix .o, $(TARGETS))
 
 top_builddir = ../..
@@ -10,16 +9,18 @@ VPATH = $(commondir)
 CPPFLAGS = -I$(commondir)
 include ../Makefile.global
 
-$(READBENCH) : % : %.o util.o
+$(MEMBENCH) : % : %.o
 	$(CC) -o $(bindir)/$@ $^ $(LIBS)
 
-$(IOREPLAYER): ioreplayer.o util.o arrayqueue.o
-	$(CC) -o $(bindir)/$@ $^ $(LIBS)
+$(MEMBENCH).c: membench-inner-rand.c
+
+membench-inner-rand.c:
+	python ./genmembenchinnerloop.py > $@
 
 .PHONY: check-syntax clean
 
 clean:
-	/bin/rm -f $(LOCALOBJS)
+	/bin/rm -f $(LOCALOBJS) membench-inner-rand.c
 
 check-syntax:
 	$(CC) -Wall -fsyntax-only $(CHK_SOURCES)

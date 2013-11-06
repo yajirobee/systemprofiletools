@@ -7,6 +7,8 @@
 #define BLOCK_SIZE 512
 #define PRNG_BUFSZ 64
 
+#define CACHELINE_SIZE 64 // assume cache line is 64B
+
 #define TS2SEC(ts) (((double) (ts).tv_sec) + ((double) (ts).tv_nsec * 1e-09))
 #define TIMEINTERVAL_SEC(sts, fts)                                      \
   ((fts.tv_sec - sts.tv_sec) + (fts.tv_nsec - sts.tv_nsec) * 1e-09)
