@@ -6,13 +6,14 @@ LOCALOBJS = $(addsuffix .o, $(TARGETS))
 top_builddir = ../..
 bindir = $(top_builddir)/bin
 commondir = ../common
+VPATH = $(commondir)
 CPPFLAGS = -I$(commondir)
 include ../Makefile.global
 
-$(READBENCH) : % : %.o $(commondir)/util.o
+$(READBENCH) : % : %.o util.o
 	$(CC) -o $(bindir)/$@ $^ $(LIBS)
 
-$(IOREPLAYER): ioreplayer.o $(commondir)/util.o $(commondir)/arrayqueue.o
+$(IOREPLAYER): ioreplayer.o util.o arrayqueue.o
 	$(CC) -o $(bindir)/$@ $^ $(LIBS)
 
 clean:
