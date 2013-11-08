@@ -69,7 +69,7 @@ def doreadbench(benchexe, outdir, fpaths, valdicts, statflg = False):
                ("usec_per_io", "real"))
     columns = recorder.createtable(tblname, columns)
     for valdict in valdicts:
-        clearcache.clear_cache(2 ** 35)
+        clearcache.clear_cache()
         nthreads = valdict["nthreads"]
         cmd = cmdtmp.format(**valdict)
         paramstr = ' '.join(["{0} = {1}".format(k, v) for k, v in valdict.items()])

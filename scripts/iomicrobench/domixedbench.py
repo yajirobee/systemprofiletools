@@ -72,7 +72,7 @@ def dobench(benchexe, outdir, valdicts, statflg = False):
         create_workload(iodumpfile, d["numtasks"],
                         d["readfiles"][:], d["writefiles"][:],
                         d["nthreads"], d["iosize"], 1 << 10, workloadfunc)
-        clearcache.clear_cache(2 ** 30)
+        clearcache.clear_cache()
         cmd = cmdtmp.format(**d)
         sys.stderr.write("start : {0}\n".format(cmd))
         if statflg:
