@@ -198,14 +198,14 @@ main(int argc, char **argv)
     mbinfo.pc.ops = 0;
     mbinfo.pc.clk = 0;
     numa_membench(&mbinfo);
-    printf("node %d :\n"
+    printf("memory_alloc_node\t%d\n"
            "access_size\t%ld\n"
            "total_ops\t%ld\n"
            "total_clk\t%ld\n"
-           "elapsed_time\t%.9f\n"
-           "ops_per_sec\t%le\n"
-           "clk_per_op\t%le\n"
-           "(usec_per_op\t%lf)\n",
+           "exec_time_sec\t%.9f\n"
+           "ops_per_sec\t%e\n"
+           "clk_per_op\t%e\n"
+           "usec_per_op\t%f\n",
            i,
            mbinfo.working_size,
            mbinfo.pc.ops,

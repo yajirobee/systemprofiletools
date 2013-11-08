@@ -9,7 +9,7 @@ VPATH = $(commondir)
 CPPFLAGS = -I$(commondir)
 include ../Makefile.global
 
-$(MEMBENCH) : % : %.o
+$(MEMBENCH) : % : %.o util.o
 	$(CC) -o $(bindir)/$@ $^ $(LIBS)
 
 $(MEMBENCH).c: membench-inner-rand.c
