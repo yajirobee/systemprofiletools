@@ -7,6 +7,7 @@ all:
 	fi
 	$(MAKE) -C common
 	$(MAKE) -C iomicrobench
+	$(MAKE) -C memmicrobench
 
 .PHONY: clean
 
@@ -14,4 +15,4 @@ clean:
 	/bin/rm -rf $(bindir)
 	$(MAKE) -C common $@
 	$(MAKE) -C iomicrobench $@
-
+	$(MAKE) -C memmicrobench $@
