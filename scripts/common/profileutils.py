@@ -129,17 +129,18 @@ def import_perfstatfile(perfstatfile):
     currentstatdict = {}
     corepat = re.compile("CPU(\d+)")
     for line in open(perfstatfile):
+        line = line.replace("<not counted>", "<notcounted>")
         vals = [v.strip() for v in line.split()]
         if not vals or len(vals) < 3: continue
         match = corepat.match(vals[0])
         if match:
             corenum = match.group(1)
             if corenum not in currentstatdict: currentstatdict[corenum] = {}
-            currentstatdict[corenum][vals[2]] = int(vals[1]) if vals != "<not counted>" else -1
+            currentstatdict[corenum][vals[2]] = int(vals[1]) if vals[1].isdigit() else -1
         elif vals[2] == "time" and vals[3] == "elapsed":
             if currentstatdict:
                 for core, v in currentstatdict.items():
-                    if core not in perfstatdict: perfstatdict[k] = []
+                    if core not in perfstatdict: perfstatdict[core] = []
                     perfstatdict[core].append(v)
             currentstatdict = {}
     return perfstatdict
