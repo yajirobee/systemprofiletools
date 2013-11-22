@@ -4,23 +4,35 @@ import sys, os, re
 import subprocess as sp
 import numpy as np
 
-class cpuio_stat_watcher(object):
+class io_stat_watcher(object):
     """
-    iostat and mpstat is executed along with in this context
+    iostat is executed along with in this context
     """
-    def __init__(self, iostatfile, mpstatfile, interval = 1):
+    def __init__(self, iostatfile, interval = 1):
         self.iostatfile = iostatfile
-        self.mpstatfile = mpstatfile
         self.interval = str(interval)
 
     def __enter__(self):
         self.iostatproc = sp.Popen(["iostat", "-x", self.interval],
                                    stdout = open(self.iostatfile, "w"))
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.iostatproc.kill()
+        return True if exc_type == None else False
+
+class mp_stat_watcher(object):
+    """
+    mpstat is executed along with in this context
+    """
+    def __init__(self, mpstatfile, interval = 1):
+        self.mpstatfile = mpstatfile
+        self.interval = str(interval)
+
+    def __enter__(self):
         self.mpstatproc = sp.Popen(["mpstat", "-P", "ALL", self.interval],
                                    stdout = open(self.mpstatfile, "w"))
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.iostatproc.kill()
         self.mpstatproc.kill()
         return True if exc_type == None else False
 

@@ -1,0 +1,8 @@
+CC = gcc
+CFLAGS =
+LIBS = -lpthread -lrt
+
+all: $(TARGETS)
+
+.c.o:
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c $<
