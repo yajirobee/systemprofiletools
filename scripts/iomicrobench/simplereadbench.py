@@ -49,6 +49,7 @@ class simplereadbenchmanager(object):
         self.cmdtmp += " " + fpath
         self.outdir = outdir
         self.clearcachefunc = clearcachefunc
+        self.statflg = statflg
 
         self.rbench = readbenchmarker()
         bname = os.path.splitext(os.path.basename(fpath))[0]
@@ -75,7 +76,7 @@ class simplereadbenchmanager(object):
                 iostatout = os.path.join(statoutdir, "iostat_interval1.io")
                 mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
                 perfout = os.path.join(statoutdir, "perfstat_interval1.perfstat")
-                res = rbench.exec_bench_wstat(cmd, iostatout, mpstatout)
-            else: res = rbench.exec_bench(cmd)
+                res = self.rbench.exec_bench_wstat(cmd, iostatout, mpstatout)
+            else: res = self.rbench.exec_bench(cmd)
             res.update(valdict)
             self.recorder.insert(self.tblname, res)

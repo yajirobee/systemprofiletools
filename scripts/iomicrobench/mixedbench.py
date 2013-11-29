@@ -55,6 +55,7 @@ class mixedloadbenchmanager(object):
         self.iodumpfile = iodumpfile
         self.clearcachefunc = clearcachefunc
         self.workloadfunc = workloadfunc
+        self.statflg = statflg
 
         self.mixbench = mixedloadbenchmarker()
         self.recorder = util.sqlitehelper(os.path.join(outdir, "mixedbench.db"))
@@ -86,7 +87,7 @@ class mixedloadbenchmanager(object):
             statoutdir = util.create_sequenceddir(direc)
             iostatout = os.path.join(statoutdir, "iostat_interval1.io")
             mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
-            res = mixbench.exec_bench_wstat(cmd, iostatout, mpstatout)
-        else: res = mixbench.exec_bench(cmd)
+            res = self.mixbench.exec_bench_wstat(cmd, iostatout, mpstatout)
+        else: res = self.mixbench.exec_bench(cmd)
         res.update(d)
         self.recorder.insert(self.tblname, res)

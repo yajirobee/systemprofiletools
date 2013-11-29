@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import sys, os, time, itertools
-import clearcache
+from clearcache import clean_cache_iod, clean_cache_disk
 
 _parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _prjtopdir = os.path.dirname(os.path.dirname(_parentdir))
@@ -9,10 +9,6 @@ _bindir = os.path.join(_prjtopdir, "bin")
 
 sys.path.append(_parentdir)
 import simplereadbench
-
-def clearcache():
-    clearcache.clear_os_cache()
-    clearcache.clear_iodrive_buffer(2 ** 32)
 
 def main(fpath):
     with open(fpath) as fo:
@@ -33,10 +29,10 @@ def main(fpath):
     statflg = True
 
     seqbncmgr = simplereadbench.simplereadbenchmanager(
-        os.path.join(_bindir, "sequentialread"), outdir, fpath, clearcache,
+        os.path.join(_bindir, "sequentialread"), outdir, fpath, clean_cache_iod,
         odirectflg, statflg)
     randbncmgr = simplereadbench.simplereadbenchmanager(
-        os.path.join(_bindir, "randomread"), outdir, fpath, clearcache,
+        os.path.join(_bindir, "randomread"), outdir, fpath, clean_cache_iod,
         odirectflg, statflg)
 
     for i in range(5):

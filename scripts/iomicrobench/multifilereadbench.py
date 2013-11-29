@@ -59,6 +59,7 @@ class multifilereadbenchmanager(object):
         self.outdir = outdir
         self.fpaths = fpaths
         self.clearcachefunc = clearcachefunc
+        self.statflg = statflg
 
         self.rbench = multifilereadbenchmarker()
         self.dbpath = os.path.join(outdir, "readspec_files{0}.db".format(len(self.fpaths)))
@@ -88,8 +89,8 @@ class multifilereadbenchmanager(object):
                 iostatout = os.path.join(statoutdir, "iostat_interval1.io")
                 mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
                 perfout = os.path.join(statoutdir, "perfstat_interval1.perfstat")
-                res = rbench.exec_bench_wstat(cmd, nthreads, self.fpaths, iostatout, mpstatout)
-            else: res = rbench.exec_bench(cmd, nthreads, self.fpaths)
+                res = self.rbench.exec_bench_wstat(cmd, nthreads, self.fpaths, iostatout, mpstatout)
+            else: res = self.rbench.exec_bench(cmd, nthreads, self.fpaths)
             res.update(valdict)
             res["io_per_sec"] = res["total_ops"] / res["exec_time_sec"]
             res["mb_per_sec"] = res["io_per_sec"] * valdict["iosize"] / 2 ** 20

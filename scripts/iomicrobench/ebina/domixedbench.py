@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import sys, os, time
-import clearcache
+from clearcache import clean_cache_iod, clean_cache_disk
 
 _parentdir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _prjtopdir = os.path.dirname(os.path.dirname(_parentdir))
@@ -9,10 +9,6 @@ _bindir = os.path.join(_prjtopdir, "bin")
 
 sys.path.append(_parentdir)
 import mixedbench
-
-def clearcache():
-    clearcache.clear_os_cache()
-    clearcache.clear_iodrive_buffer(2 ** 32)
 
 def main():
     datadir = "/data/iod8raid0/tpchdata"
@@ -38,7 +34,7 @@ def main():
 
     mixbncmgr = mixedbench.mixedloadbenchmanager(
         os.path.join(_bindir, "ioreplayer"), outdir, iodumpfile,
-        clearcache, workloadfunc, odirectflg, statflg)
+        clean_cache_iod, workloadfunc, odirectflg, statflg)
 
     for i in range(5):
         mixbncmgr.dobench(valdicts)
