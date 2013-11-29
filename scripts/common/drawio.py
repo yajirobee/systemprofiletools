@@ -3,7 +3,7 @@
 import sys, os, re, Gnuplot
 import plotutil
 
-slide = False
+slide = False | True
 
 def init_gnuplot(terminaltype):
     gp = plotutil.gpinit(terminaltype)
