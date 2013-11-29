@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 
-import sys, os, shlex, re, time
+import sys, os, shlex, re
 import subprocess as sp
 from createworkload import create_workload
-import clearcache
 
 _mydirabspath = os.path.dirname(os.path.abspath(__file__))
 _prjtopdir = os.path.dirname(os.path.dirname(_mydirabspath))
-_bindir = os.path.join(_prjtopdir, "bin")
 _commondir = os.path.join(os.path.dirname(_mydirabspath), "common")
 
 sys.path.append(_commondir)
@@ -46,60 +44,49 @@ class mixedloadbenchmarker(object):
                 res[match.group(1)] = float(match.group(2))
         return res
 
+class mixedloadbenchmanager(object):
+    def __init__(self, benchexe, outdir, iodumpfile,
+                 clearcachefunc, workloadfunc,
+                 odirectflg = False, statflg = False):
+        self.cmdtmp = benchexe + " -m {nthreads}"
+        if odirectflg: self.cmdtmp += " -d"
+        self.cmdtmp += " " + iodumpfile
+        self.outdir = outdir
+        self.iodumpfile = iodumpfile
+        self.clearcachefunc = clearcachefunc
+        self.workloadfunc = workloadfunc
 
-def dobench(benchexe, outdir, valdicts, statflg = False):
-    iodumpfile = "/tmp/iodump"
-    cmdtmp = benchexe + " -m {nthreads} " + iodumpfile
-    mixbench = mixedloadbenchmarker()
-    dbpath = os.path.join(outdir, "mixedbench.db")
-    recorder = util.sqlitehelper(dbpath)
-    tblname = "mixedworkload"
-    columns = (("iosize", "integer"),
-               ("nthreads", "integer"),
-               ("exec_time_sec", "real"),
-               ("generated_tasks", "integer"),
-               ("operated_tasks", "integer"),
-               ("usec_per_task", "real"),
-               ("read_mb_per_sec", "real"),
-               ("read_io_per_sec", "real"),
-               ("read_usec_per_io", "real"),
-               ("write_mb_per_sec", "real"),
-               ("write_io_per_sec", "real"),
-               ("write_usec_per_io", "real"))
-    columns = recorder.createtable(tblname, columns)
-    workloadfunc = lambda i: i % 4 <= 2
-    for d in valdicts:
-        create_workload(iodumpfile, d["numtasks"],
-                        d["readfiles"][:], d["writefiles"][:],
-                        d["nthreads"], d["iosize"], 1 << 10, workloadfunc)
-        clearcache.clear_cache()
+        self.mixbench = mixedloadbenchmarker()
+        self.recorder = util.sqlitehelper(os.path.join(outdir, "mixedbench.db"))
+        self.tblname = "mixedworkload"
+        columns = (("iosize", "integer"),
+                   ("nthreads", "integer"),
+                   ("exec_time_sec", "real"),
+                   ("generated_tasks", "integer"),
+                   ("operated_tasks", "integer"),
+                   ("usec_per_task", "real"),
+                   ("read_mb_per_sec", "real"),
+                   ("read_io_per_sec", "real"),
+                   ("read_usec_per_io", "real"),
+                   ("write_mb_per_sec", "real"),
+                   ("write_io_per_sec", "real"),
+                   ("write_usec_per_io", "real"))
+        self.recorder.createtable(self.tblname, columns)
+
+    def dobench(self, valdicts):
+        for d in valdicts:
+            create_workload(self.iodumpfile, d["numtasks"],
+                            d["readfiles"][:], d["writefiles"][:],
+                            d["nthreads"], d["iosize"], d["maxiter"], self.workloadfunc)
+        self.clearcachefunc()
         cmd = cmdtmp.format(**d)
         sys.stderr.write("start : {0}\n".format(cmd))
         if statflg:
-            direc = os.path.join(outdir, tblname + "_nthreads{0}".format(d["nthreads"]))
+            direc = os.path.join(self.outdir, self.tblname + "_nthreads{0}".format(d["nthreads"]))
             statoutdir = util.create_sequenceddir(direc)
             iostatout = os.path.join(statoutdir, "iostat_interval1.io")
             mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
             res = mixbench.exec_bench_wstat(cmd, iostatout, mpstatout)
         else: res = mixbench.exec_bench(cmd)
         res.update(d)
-        recorder.insert(tblname, res)
-
-def main():
-    datadir = "/data/iod8raid0/tpchdata"
-    valdicts = [{"nthreads": 1 << i, "numtasks": 4000,
-                 "iosize": 1 << 13, "maxiter": 1 << 10,
-                 "readfiles": [os.path.join(datadir, "benchdata" + str(i))
-                               for i in range(32)],
-                 "writefiles": [os.path.join(datadir, "benchdata" + str(i))
-                                for i in range(32, 64)]
-                 } for i in range(5)]
-
-    outdir = "/data/local/keisuke/{0}".format(time.strftime("%Y%m%d%H%M%S", time.gmtime()))
-    os.mkdir(outdir)
-
-    for i in range(5):
-        dobench(os.path.join(_bindir, "ioreplayer"), outdir, valdicts, True)
-
-if __name__ == "__main__":
-    main()
+        self.recorder.insert(self.tblname, res)
