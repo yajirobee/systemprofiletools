@@ -3,13 +3,13 @@
 import sys, os, re, Gnuplot
 import plotutil
 
-slide = False
+slide = False | True
 
 def init_gnuplot(terminaltype):
     gp = plotutil.gpinit(terminaltype)
     gp.xlabel("elapsed time [s]")
     gp('set grid')
-    if slide:
+    if slide and terminaltype == "png":
         gp('set termoption font "Times-Roman,22"')
         plotprefdict = {"with_" : "lines lw 2"}
     else:

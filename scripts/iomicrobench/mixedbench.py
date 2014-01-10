@@ -48,7 +48,7 @@ class mixedloadbenchmanager(object):
     def __init__(self, benchexe, outdir, iodumpfile,
                  clearcachefunc, workloadfunc,
                  odirectflg = False, statflg = False):
-        self.cmdtmp = benchexe + " -m {nthreads}"
+        self.cmdtmp = benchexe
         if odirectflg: self.cmdtmp += " -d"
         self.cmdtmp += " " + iodumpfile
         self.outdir = outdir
@@ -80,7 +80,8 @@ class mixedloadbenchmanager(object):
                             d["readfiles"][:], d["writefiles"][:],
                             d["nthreads"], d["iosize"], d["maxiter"], self.workloadfunc)
             self.clearcachefunc()
-            cmd = self.cmdtmp.format(**d)
+            if "nthreads" in d: cmd += " -m {nthreads}".format(nthreads = d["nthreads"])
+            if "timeout" in d: cmd += " -t {timeout}".format(timeout = d["timeout"])
             sys.stderr.write("start : {0}\n".format(cmd))
             if self.statflg:
                 direc = os.path.join(self.outdir, self.tblname + "_nthreads{0}".format(d["nthreads"]))
