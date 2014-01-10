@@ -12,19 +12,20 @@ import mixedbench
 
 def main():
     datadir = "/data/iod8raid0/tpchdata"
-    # valdicts = [{"nthreads": i, "numtasks": 4000,
-    #              "iosize": 1 << 13, "maxiter": 1 << 10,
-    #              "readfiles": [os.path.join(datadir, "benchdata" + str(j))
-    #                            for j in range(32)],
-    #              "writefiles": [os.path.join(datadir, "benchdata" + str(j))
-    #                             for j in range(32, 32 + 32)]
-    #              } for i in [1 << i for i in range(5)]]
-    valdicts = [{"nthreads": 1, "numtasks": 4000, "iosize": i, "maxiter": 1 << 10,
+    valdicts = [{"nthreads": i, "numtasks": 16000,
+                 "iosize": 1 << 13, "maxiter": 1 << 10,
                  "readfiles": [os.path.join(datadir, "benchdata" + str(j))
                                for j in range(32)],
                  "writefiles": [os.path.join(datadir, "benchdata" + str(j))
-                                for j in range(32, 32 + 32)]}
-                for i in [1 << j in range(9, 21)]]
+                                for j in range(32, 32 + 32)],
+                 "timeout": 30
+                 } for i in [1 << i for i in range(5)]]
+    # valdicts = [{"nthreads": 1, "numtasks": 4000, "iosize": i, "maxiter": 1 << 10,
+    #              "readfiles": [os.path.join(datadir, "benchdata" + str(j))
+    #                            for j in range(32)],
+    #              "writefiles": [os.path.join(datadir, "benchdata" + str(j))
+    #                             for j in range(32, 32 + 32)]}
+    #             for i in [1 << j in range(9, 21)]]
     iodumpfile = "/tmp/iodump"
     workloadfunc = lambda i: i % 4 <= 2
     outdir = "/data/local/keisuke/{0}".format(time.strftime("%Y%m%d%H%M%S", time.gmtime()))
