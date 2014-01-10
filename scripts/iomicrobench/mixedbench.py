@@ -80,6 +80,7 @@ class mixedloadbenchmanager(object):
                             d["readfiles"][:], d["writefiles"][:],
                             d["nthreads"], d["iosize"], d["maxiter"], self.workloadfunc)
             self.clearcachefunc()
+            cmd = self.cmdtmp
             if "nthreads" in d: cmd += " -m {nthreads}".format(nthreads = d["nthreads"])
             if "timeout" in d: cmd += " -t {timeout}".format(timeout = d["timeout"])
             sys.stderr.write("start : {0}\n".format(cmd))

@@ -13,20 +13,20 @@ import mixedbench
 def main():
     datadir = "/data/iod8raid0/benchdata"
     # datadir = "/data/disk12raid0/benchdata"
-    valdicts = [{"nthreads": i, "numtasks": 16000,
-                 "iosize": 1 << 13, "maxiter": 1 << 10,
-                 "readfiles": [os.path.join(datadir, "benchdata" + str(j))
-                               for j in range(32)],
-                 "writefiles": [os.path.join(datadir, "benchdata" + str(j))
-                                for j in range(32, 32 + 32)],
+    valdicts = [{"nthreads": i, "numtasks": (1 << 37) / (j * (1 << 10)),
+                 "iosize": j, "maxiter": 1 << 10,
+                 "readfiles": [os.path.join(datadir, "benchdata" + str(k))
+                               for k in range(64)],
+                 "writefiles": [os.path.join(datadir, "benchdata" + str(k))
+                                for k in range(64, 128)],
                  "timeout": 30
-                 } for i in [1 << i for i in range(5)]]
+                 } for j in (1 << 13, 1 << 16, 1 << 18) for i in [1 << i for i in range(7)]]
     # valdicts = [{"nthreads": 1, "numtasks": (1 << 36) / (i * (1 << 10)),
     #              "iosize": i, "maxiter": 1 << 10,
     #              "readfiles": [os.path.join(datadir, "benchdata" + str(j))
-    #                            for j in range(32)],
+    #                            for j in range(64)],
     #              "writefiles": [os.path.join(datadir, "benchdata" + str(j))
-    #                             for j in range(32, 32 + 32)]}
+    #                             for j in range(64, 128)]}
     #             for i in [1 << j for j in range(9, 21)]]
 
     iodumpfile = "/tmp/iodump"
