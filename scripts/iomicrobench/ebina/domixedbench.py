@@ -11,7 +11,8 @@ sys.path.append(_parentdir)
 import mixedbench
 
 def main():
-    datadir = "/data/iod8raid0/tpchdata"
+    datadir = "/data/iod8raid0/benchdata"
+    # datadir = "/data/disk12raid0/benchdata"
     # valdicts = [{"nthreads": i, "numtasks": 4000,
     #              "iosize": 1 << 13, "maxiter": 1 << 10,
     #              "readfiles": [os.path.join(datadir, "benchdata" + str(j))
@@ -19,12 +20,13 @@ def main():
     #              "writefiles": [os.path.join(datadir, "benchdata" + str(j))
     #                             for j in range(32, 32 + 32)]
     #              } for i in [1 << i for i in range(5)]]
-    valdicts = [{"nthreads": 1, "numtasks": 4000, "iosize": i, "maxiter": 1 << 10,
+    valdicts = [{"nthreads": 1, "numtasks": (1 << 36) / (i * (1 << 7)),
+                 "iosize": i, "maxiter": 1 << 7,
                  "readfiles": [os.path.join(datadir, "benchdata" + str(j))
                                for j in range(32)],
                  "writefiles": [os.path.join(datadir, "benchdata" + str(j))
                                 for j in range(32, 32 + 32)]}
-                for i in [1 << j in range(9, 21)]]
+                for i in [1 << j for j in range(9, 21)]]
     iodumpfile = "/tmp/iodump"
     workloadfunc = lambda i: i % 4 <= 2
     outdir = "/data/local/keisuke/{0}".format(time.strftime("%Y%m%d%H%M%S", time.gmtime()))
@@ -34,7 +36,8 @@ def main():
 
     mixbncmgr = mixedbench.mixedloadbenchmanager(
         os.path.join(_bindir, "ioreplayer"), outdir, iodumpfile,
-        clean_cache_iod, workloadfunc, odirectflg, statflg)
+        clean_cache_iod, #clean_cache_disk,
+        workloadfunc, odirectflg, statflg)
 
     for i in range(5):
         mixbncmgr.dobench(valdicts)

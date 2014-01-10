@@ -79,15 +79,15 @@ class mixedloadbenchmanager(object):
             create_workload(self.iodumpfile, d["numtasks"],
                             d["readfiles"][:], d["writefiles"][:],
                             d["nthreads"], d["iosize"], d["maxiter"], self.workloadfunc)
-        self.clearcachefunc()
-        cmd = cmdtmp.format(**d)
-        sys.stderr.write("start : {0}\n".format(cmd))
-        if statflg:
-            direc = os.path.join(self.outdir, self.tblname + "_nthreads{0}".format(d["nthreads"]))
-            statoutdir = util.create_sequenceddir(direc)
-            iostatout = os.path.join(statoutdir, "iostat_interval1.io")
-            mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
-            res = self.mixbench.exec_bench_wstat(cmd, iostatout, mpstatout)
-        else: res = self.mixbench.exec_bench(cmd)
-        res.update(d)
-        self.recorder.insert(self.tblname, res)
+            self.clearcachefunc()
+            cmd = self.cmdtmp.format(**d)
+            sys.stderr.write("start : {0}\n".format(cmd))
+            if self.statflg:
+                direc = os.path.join(self.outdir, self.tblname + "_nthreads{0}".format(d["nthreads"]))
+                statoutdir = util.create_sequenceddir(direc)
+                iostatout = os.path.join(statoutdir, "iostat_interval1.io")
+                mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
+                res = self.mixbench.exec_bench_wstat(cmd, iostatout, mpstatout)
+            else: res = self.mixbench.exec_bench(cmd)
+            res.update(d)
+            self.recorder.insert(self.tblname, res)
