@@ -26,12 +26,15 @@ struct {
   char *iodumpfile;
   long quelength;
   long bufsize;
+  double timeout; // timeout in second
 } option;
 
 void
 printusage(const char *cmd)
 {
-  fprintf(stderr, "Usage : %s [-d] [-m nthread] [-q queue_length] iodumpfile\n", cmd);
+  fprintf(stderr,
+          "Usage : %s [-d] [-m nthread] [-q queue_length] [-t timeout ] iodumpfile\n",
+          cmd);
 }
 
 void
@@ -45,8 +48,9 @@ parsearg(int argc, char **argv)
   option.iodumpfile = NULL;
   option.quelength = 1 << 18;
   option.bufsize = 1 << 22;
+  option.timeout = 60 * 60;
 
-  while ((opt = getopt(argc, argv, "dm:q:")) != -1) {
+  while ((opt = getopt(argc, argv, "dm:q:t:")) != -1) {
     switch (opt) {
     case 'd':
       option.openflg |= O_DIRECT;
@@ -56,6 +60,9 @@ parsearg(int argc, char **argv)
       break;
     case 'q':
       option.quelength = procsuffix(optarg);
+      break;
+    case 't':
+      option.timeout = atof(optarg);
       break;
     default:
       printusage(argv[0]);
@@ -92,14 +99,20 @@ ioreplayer(task_queue_t *tskque, char *buf, stats_t *stats)
   int i;
   iotask_t *curtask;
   int fd;
+  struct timespec stime, ftime;
 
   // perform read operation
-  while (1){
+  CLOCK_GETTIME(&stime);
+  ftime = stime;
+  while (TIMEINTERVAL_SEC(stime, ftime) < option.timeout) {
     pthread_mutex_lock(&tskque->control.mtx);
-    while (queue_isempty(&tskque->tasks) && tskque->control.active) {
-      pthread_cond_wait(&tskque->control.more, &tskque->control.mtx);
+    while ((queue_isempty(&tskque->tasks) && tskque->control.active) &&
+           TIMEINTERVAL_SEC(stime, ftime) < option.timeout) {
+      ftime.tv_sec += 1;
+      pthread_cond_timedwait(&tskque->control.more, &tskque->control.mtx, &ftime);
     }
-    if (queue_isempty(&tskque->tasks) && !tskque->control.active) {
+    if ((queue_isempty(&tskque->tasks) && !tskque->control.active) ||
+        TIMEINTERVAL_SEC(stime, ftime) >= option.timeout) {
       pthread_mutex_unlock(&tskque->control.mtx);
       break;
     }
@@ -126,6 +139,7 @@ ioreplayer(task_queue_t *tskque, char *buf, stats_t *stats)
     }
     close(fd);
     free(curtask);
+    CLOCK_GETTIME(&ftime);
   }
 }
 
@@ -187,16 +201,28 @@ iotaskproducer(task_queue_t *tskque)
   long numtasks = 0;
   iotask_t *curtask;
   FILE *fp = fopen(option.iodumpfile, "r");
+  struct timespec stime, ftime;
 
-  for (curtask = getnext(fp); curtask != NULL; curtask = getnext(fp)) {
+  CLOCK_GETTIME(&stime);
+  ftime = stime;
+  for (curtask = getnext(fp);
+       curtask != NULL && TIMEINTERVAL_SEC(stime, ftime) < option.timeout;
+       curtask = getnext(fp)) {
     pthread_mutex_lock(&tskque->control.mtx);
-    while (queue_isfull(&tskque->tasks)) {
-      pthread_cond_wait(&tskque->control.less, &tskque->control.mtx);
+    while (queue_isfull(&tskque->tasks) &&
+           TIMEINTERVAL_SEC(stime, ftime) < option.timeout) {
+      ftime.tv_sec += 1;
+      pthread_cond_timedwait(&tskque->control.less, &tskque->control.mtx, &ftime);
+    }
+    if (TIMEINTERVAL_SEC(stime, ftime) >= option.timeout) {
+      pthread_mutex_unlock(&tskque->control.mtx);
+      break;
     }
     queue_push(&tskque->tasks, curtask);
     numtasks++;
     pthread_cond_signal(&tskque->control.more);
     pthread_mutex_unlock(&tskque->control.mtx);
+    CLOCK_GETTIME(&ftime);
   }
   fclose(fp);
   return numtasks;
