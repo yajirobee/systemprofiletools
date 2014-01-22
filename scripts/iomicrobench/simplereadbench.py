@@ -43,7 +43,8 @@ class readbenchmarker(object):
         return res
 
 class simplereadbenchmanager(object):
-    def __init__(self, benchexe, outdir, fpath, clearcachefunc, odirectflg = False, statflg = False):
+    def __init__(self, benchexe, outdir, fpath, clearcachefunc,
+                 odirectflg = False, statflg = False):
         self.cmdtmp = benchexe + " -s {iosize} -m {nthreads} -i {iterate} -t {timeout}"
         if odirectflg: self.cmdtmp += " -d"
         self.cmdtmp += " " + fpath

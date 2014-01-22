@@ -3,7 +3,7 @@ CFLAGS =
 LDFLAGS =
 BINDIR = ../../../bin
 BENCHDATADIR = /data/iod8raid0/benchdata
-NUMBERS = $(shell seq 0 63)
+NUMBERS = $(shell seq 0 127)
 TARGET = $(addprefix $(BENCHDATADIR)/benchdata, $(NUMBERS))
 
 all: $(TARGET)

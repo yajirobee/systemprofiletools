@@ -134,6 +134,7 @@ void
 random_read(randread_t *readinfo)
 {
   int i, tmp;
+  int nbyte;
   struct timespec stime, ftime;
 
   //set affinity
@@ -144,12 +145,12 @@ random_read(randread_t *readinfo)
 
   CLOCK_GETTIME(&stime);
   do {
-    for (i = 0; i < 1024; i++) {
+    for (nbyte = 0, i = 0; (nbyte < (1 << 20)) && (i < 1024); i++) {
       random_r(&readinfo->random_states, &tmp);
-      pread(readinfo->fd, readinfo->buf, option.iosize,
-            (tmp % option.seekmax) * BLOCK_SIZE);
+      nbyte += pread(readinfo->fd, readinfo->buf, option.iosize,
+                     (tmp % option.seekmax) * BLOCK_SIZE);
     }
-    readinfo->ops += 1024;
+    readinfo->ops += i;
     CLOCK_GETTIME(&ftime);
   } while ((TIMEINTERVAL_SEC(stime, ftime) < option.timeout) &&
            (readinfo->ops < option.maxiter));
@@ -224,14 +225,12 @@ main(int argc, char **argv)
     for (i = 1; i < option.nthread; i++) {
       if (stime > readinfos[i].stime) { stime = readinfos[i].stime; }
       if (ftime < readinfos[i].ftime) { ftime = readinfos[i].ftime; }
-    }
-    exectime = ftime - stime;
-    for (i = 0; i < option.nthread; i++) { ops += readinfos[i].ops; }
-    iops = ops / exectime;
-    mbps = (option.iosize * ops) / exectime / 1000000;
-    for (i = 0; i < option.nthread; i++){
+      ops += readinfos[i].ops;
       latency += (readinfos[i].ftime - readinfos[i].stime);
     }
+    exectime = ftime - stime;
+    iops = ops / exectime;
+    mbps = (option.iosize * ops) / exectime / 1000000;
     latency /= ops;
     printf("start_time\t%.9f\n"
            "finish_time\t%.9f\n",

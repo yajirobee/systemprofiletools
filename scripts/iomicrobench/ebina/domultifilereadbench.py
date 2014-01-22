@@ -11,12 +11,12 @@ sys.path.append(_parentdir)
 import multifilereadbench
 
 def main(fpaths):
-    iomax = 2 ** 38
+    iomax = 1 << 38
     timeout = 30
-    iosizes = [2 ** i for i in range(9, 22)]
-    nthreadslist = [2 ** i for i in range(7)]
+    iosizes = [2 ** i for i in range(9, 21)]
+    nthreadslist = [2 ** i for i in range(8)]
     maxnthreads = max(nthreadslist)
-    maxfsize = iomax / maxnthreads
+    maxfsize = 1 << 32  #iomax / maxnthreads
     valdicts = [{"iosize" : vals[0],
                  "nthreads" : vals[1],
                  "timeout": timeout,
@@ -37,9 +37,9 @@ def main(fpaths):
 
     for i in range(5):
         # sequential read
-        sys.stdout.write("sequential read\n")
-        seqbncmgr.dobench(valdicts)
-        time.sleep(300)
+        # sys.stdout.write("sequential read\n")
+        # seqbncmgr.dobench(valdicts)
+        # time.sleep(300)
 
         # random read
         sys.stdout.write("random read\n")

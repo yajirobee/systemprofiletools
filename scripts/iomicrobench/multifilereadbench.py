@@ -52,7 +52,8 @@ class multifilereadbenchmarker(object):
         return res
 
 class multifilereadbenchmanager(object):
-    def __init__(self, benchexe, outdir, fpaths, clearcachefunc, odirectflg = False, statflg = False):
+    def __init__(self, benchexe, outdir, fpaths, clearcachefunc,
+                 odirectflg = False, statflg = False):
         self.cmdtmp = benchexe + " -s {iosize} -m {{nthreads}} -i {iterate} -t {timeout}"
         if odirectflg: self.cmdtmp += " -d"
         self.cmdtmp += " {{fpath}}"
@@ -63,7 +64,7 @@ class multifilereadbenchmanager(object):
 
         self.rbench = multifilereadbenchmarker()
         self.dbpath = os.path.join(outdir, "readspec_files{0}.db".format(len(self.fpaths)))
-        self.recorder = util.sqlitehelper(dbpath)
+        self.recorder = util.sqlitehelper(self.dbpath)
         self.tblname = os.path.basename(benchexe)
         columns = (("iosize", "integer"),
                    ("nthreads", "integer"),
@@ -81,8 +82,8 @@ class multifilereadbenchmanager(object):
             nthreads = valdict["nthreads"]
             cmd = self.cmdtmp.format(**valdict)
             paramstr = ' '.join(["{0} = {1}".format(k, v) for k, v in valdict.items()])
-            sys.stderr.write("start : {0} {1}\n".format(tblname, paramstr))
-            if statflg:
+            sys.stderr.write("start : {0} {1}\n".format(self.tblname, paramstr))
+            if self.statflg:
                 bname = '_'.join([str(k) + str(v) for k, v in valdict.items()]) if valdict else "record"
                 direc = os.path.join(self.outdir, self.tblname + bname)
                 statoutdir = util.create_sequenceddir(direc)

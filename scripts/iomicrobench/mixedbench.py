@@ -45,13 +45,15 @@ class mixedloadbenchmarker(object):
         return res
 
 class mixedloadbenchmanager(object):
-    def __init__(self, benchexe, outdir, iodumpfile,
+    def __init__(self, benchexe, outdir,
+                 readfiles, writefiles, iodumpfile,
                  clearcachefunc, workloadfunc,
                  odirectflg = False, statflg = False):
         self.cmdtmp = benchexe
         if odirectflg: self.cmdtmp += " -d"
-        self.cmdtmp += " " + iodumpfile
         self.outdir = outdir
+        self.readfiles = readfiles
+        self.writefiles = writefiles
         self.iodumpfile = iodumpfile
         self.clearcachefunc = clearcachefunc
         self.workloadfunc = workloadfunc
@@ -74,18 +76,26 @@ class mixedloadbenchmanager(object):
                    ("write_usec_per_io", "real"))
         self.recorder.createtable(self.tblname, columns)
 
+    def generatecommand(self, optdict):
+        cmd = self.cmdtmp
+        if "nthreads" in optdict: cmd += " -m " + str(optdict["nthreads"])
+        if "timeout" in optdict: cmd += " -t " + str(optdict["timeout"])
+        cmd += " " + self.iodumpfile
+        return cmd
+
     def dobench(self, valdicts):
         for d in valdicts:
             create_workload(self.iodumpfile, d["numtasks"],
-                            d["readfiles"][:], d["writefiles"][:],
+                            self.readfiles[:], self.writefiles[:],
                             d["nthreads"], d["iosize"], d["maxiter"], self.workloadfunc)
             self.clearcachefunc()
-            cmd = self.cmdtmp
-            if "nthreads" in d: cmd += " -m {nthreads}".format(nthreads = d["nthreads"])
-            if "timeout" in d: cmd += " -t {timeout}".format(timeout = d["timeout"])
+            cmd = self.generatecommand(d)
             sys.stderr.write("start : {0}\n".format(cmd))
             if self.statflg:
-                direc = os.path.join(self.outdir, self.tblname + "_nthreads{0}".format(d["nthreads"]))
+                dirname = self.tblname
+                for key in ("nthreads", "iosize"):
+                    if key in d: dirname += "_{k}{v}".format(k = key, v = d[key])
+                direc = os.path.join(self.outdir, dirname)
                 statoutdir = util.create_sequenceddir(direc)
                 iostatout = os.path.join(statoutdir, "iostat_interval1.io")
                 mpstatout = os.path.join(statoutdir, "mpstat_interval1.cpu")
