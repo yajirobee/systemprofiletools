@@ -13,7 +13,7 @@ tables = ["sequentialread", "randomread"]
 
 def init_gnuplot(terminaltype):
     gp = gpinit(terminaltype)
-    gp('set logscale x')
+    gp('set logscale x 2')
     gp('set grid')
     if slide:
         if "eps" == terminaltype:
@@ -23,7 +23,9 @@ def init_gnuplot(terminaltype):
             gp('set termoption font "Times-Roman,18"')
             plotprefdict = {"with_" : "yerrorlines lw 2"}
     else:
-        plotprefdict = {"with_" : "yerrorlines" }
+        plotprefdict = {"with_" : "linespoints"}#"yerrorlines" }
+    if terminaltype == "eps":
+        gp('set size 1.4,1')
     return gp, plotprefdict
 
 def plot_iosize_spec(dbpath, terminaltype = "png"):
@@ -35,9 +37,10 @@ def plot_iosize_spec(dbpath, terminaltype = "png"):
     gp, plotprefdict = init_gnuplot(terminaltype)
 
     gp.xlabel("I/O size [B]")
-    gp('set format x "%.0s%cB"')
+    gp('set format x "%.0b%B"')
+    gp('set key outside right')
     for tbl in tables:
-        nthreadlist = [r[0] for r in conn.execute("select distinct nthread from {0}".format(tbl))]
+        nthreadslist = [r[0] for r in conn.execute("select distinct nthreads from {0}".format(tbl))]
         gp('set title "{0}"'.format(tbl.title()))
         for col in cols:
             gp('set ylabel "{0}" offset 1'.format(col["ylabel"]))
@@ -46,10 +49,10 @@ def plot_iosize_spec(dbpath, terminaltype = "png"):
             figpath = "{0}_{1}_{2}_xiosize.{3}".format(fpath, tbl, col["name"], terminaltype)
             gp('set output "{0}"'.format(figpath))
             query = ("select iosize,avg({0}),stdev({0}) "
-                     "from {1} where nthread={{nthread}} "
-                     "group by iosize,nthread".format(col["name"], tbl))
-            gds = query2gds(conn, query, nthread = nthreadlist,
-                            title = "nthreads = {nthread}", **plotprefdict)
+                     "from {1} where nthreads={{nthreads}} "
+                     "group by iosize,nthreads".format(col["name"], tbl))
+            gds = query2gds(conn, query, nthreads = nthreadslist,
+                            title = "nthreads = {nthreads}", **plotprefdict)
             sys.stdout.write('draw : {0}\n'.format(figpath))
             gp.plot(*gds)
     gp.close()
@@ -63,21 +66,24 @@ def plot_nthread_spec(dbpath, terminaltype = "png"):
     fpath = os.path.dirname(dbpath) + "/" + os.path.splitext(dbpath)[0].rsplit('_', 1)[1]
     gp, plotprefdict = init_gnuplot(terminaltype)
 
-    gp.xlabel("nthread")
+
+    gp.xlabel("nthreads")
+    gp('set key outside right width -6')
     for tbl in tables:
-        iosizelist = [r[0] for r in conn.execute("select distinct iosize from {0}".format(tbl))]
-        gp('set title "{0}"'.format(tbl.title()))
+        iosizelist = [r[0] for r
+                      in conn.execute("select distinct iosize from {0} where iosize >= 4096 and iosize < 1000000".format(tbl))]
+        #gp('set title "{0}"'.format(tbl.title()))
         for col in cols:
             gp('set ylabel "{0}" offset 1'.format(col["ylabel"]))
             if col["name"] == "usec_per_io": gp('set key left top')
             else: gp('set key right top')
-            figpath = "{0}_{1}_{2}_xnthread.{3}".format(fpath, tbl, col["name"], terminaltype)
+            figpath = "{0}_{1}_{2}_xnthreads.{3}".format(fpath, tbl, col["name"], terminaltype)
             gp('set output "{0}"'.format(figpath))
-            query = ("select nthread,avg({0}),stdev({0})"
+            query = ("select nthreads,avg({0}),stdev({0})"
                      " from {1} where iosize={{iosize}} "
-                     "group by iosize,nthread".format(col["name"], tbl))
+                     "group by iosize,nthreads".format(col["name"], tbl))
             gds = query2gds(conn, query, iosize = iosizelist,
-                            title = "iosize = {iosize}", **plotprefdict)
+                            title = "I/O size = {iosize}", **plotprefdict)
             sys.stdout.write('draw : {0}\n'.format(figpath))
             gp.plot(*gds)
     gp.close()

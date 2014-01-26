@@ -359,6 +359,10 @@ main(int argc, char **argv)
   for (i = 0; i < option.nthread; i++){ free(thrdcnfs[i].buf); }
   free(thrdcnfs);
   delete_queue(&cleanupque.finthreads);
+  while (!queue_isempty(&tskque->tasks)) {
+    iotask_t *curtask = (iotask_t *) queue_pop(&tskque->tasks);
+    free(curtask);
+  }
   delete_queue(&tskque.tasks);
   return 0;
 }
